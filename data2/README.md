@@ -7,7 +7,7 @@
 | ind.dataset_str.ty | the one-hot labels of the test instances as numpy.ndarray object |
 | ind.dataset_str.ally | the labels for instances in ind.dataset_str.allx as numpy.ndarray object |
 | ind.dataset_str.graph | a dict in the format {index: [index_of_neighbor_nodes]} as collections.defaultdict object |
-| ind.dataset_str.test.index | the indices of test instances in graph, for the inductive setting as list object. 
+| ind.dataset_str.test.index | the indices of test instances in graph, for the inductive setting as list object. |
 
 All objects above are saved using python pickle module.
 
