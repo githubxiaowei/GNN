@@ -110,8 +110,7 @@ acc = []
 for _ in range(1):
 
     # Model and optimizer
-    model = GCN(n_nodes=num_nodes,
-                nfeat=features.shape[1],
+    model = GCN(nfeat=features.shape[1],
                 nhid=args.hidden,
                 nclass=labels.max().item() + 1,
                 dropout=args.dropout)
@@ -122,7 +121,6 @@ for _ in range(1):
         model.cuda()
         features = features.cuda()
         adj = adj.cuda()
-        # L = L.float().cuda()
         labels = labels.cuda()
 
     # Train model
