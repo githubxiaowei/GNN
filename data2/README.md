@@ -1,3 +1,13 @@
+# citation dataset
+
+- cora
+- citeseer
+- pubmed
+
+---
+
+## load data
+
 | pickle filename | description |
 | :-------- : | :----- |
 | ind.dataset_str.x | the feature vectors of the training instances as scipy.sparse.csr.csr_matrix object |
