@@ -4,6 +4,16 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 import pickle as pkl
+import time
+
+
+class Timer(object):
+    def __enter__(self):
+        print('[start]')
+        self.t0 = time.time()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print('[time spent: {time:.2f}s]'.format(time = time.time() - self.t0))
 
 
 def encode_onehot(labels):
@@ -183,19 +193,19 @@ def load_data2(dataset_str):
 
     features = sp.vstack((allx, tx)).tolil()
     features[test_idx_reorder, :] = features[test_idx_range, :]
-    features = normalize(features)
 
     adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+
     # G = nx.Graph(adj)
     # pr = nx.pagerank(G, alpha=0.8)
-    # p = np.array([[item[1]] for item in pr.items()])
-    # pp = p + p.T
-    # adj = adj.multiply(pp)
+    # p = np.array([item[1] for item in pr.items()])
+    # pp = np.diag(np.log(1+p))
+    # print('pp shape', pp.shape)
 
-    adj = normalize_adj(adj + sp.eye(adj.shape[0]) )
-
-    features = adj.dot(features)
+    adj0 = normalize_adj(adj + sp.eye(adj.shape[0]) )
+    features = adj0.dot(features)
+    features = normalize(features)
 
     labels = np.vstack((ally, ty))
     labels[test_idx_reorder, :] = labels[test_idx_range, :]
@@ -204,12 +214,46 @@ def load_data2(dataset_str):
     idx_train = range(len(y))
     idx_val = range(len(y), len(y) + 500)
 
+    min_degree = 5
+    fdense = features.todense()
+    with Timer():
+
+        similarity = fdense.dot(fdense.T).getA()
+        edges = []
+        for i in range(similarity.shape[0]):
+            num_neighbors = np.sum(adj[i])
+            if num_neighbors < min_degree:
+                for s,v in topk(similarity[i], min_degree):
+                    edges.append((i,v))
+        edges = np.array(edges)
+        adjs = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
+                            shape=(similarity.shape[0], similarity.shape[0]),
+                            dtype=np.float32)
+
+    # adj = normalize_adj(adj + adjs)
+    # adj = normalize_adj((adj + normalize_adj(adjs)))
+    # adj = normalize_adj((adj0 + normalize_adj(adjs)))
+    adj = normalize_adj(adj + adjs)
+
     # convert to torch tensor
-    features = torch.FloatTensor(np.array(features.todense()))
+    features = torch.FloatTensor(np.array(fdense))
     # features = sparse_mx_to_torch_sparse_tensor(features)    ## using dense features is faster
     labels = torch.LongTensor(np.where(labels)[1])
     # adj = sparse_mx_to_torch_sparse_tensor(adj)
-
     adj = torch.FloatTensor(np.array(adj.todense()))
 
     return adj, features, labels, idx_train, idx_val, idx_test
+
+
+def topk(inputs, k):
+    output = []
+    for i, number in enumerate(inputs):
+        if len(output) < k:
+            output.append((number, i))
+        else:
+            output.sort()
+            if number < output[0][0]:
+                continue
+            else:
+                output[0] = (number, i)
+    return output

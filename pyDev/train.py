@@ -93,7 +93,7 @@ def test():
     output, _ = model(features, adj)
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
-    print("Test set results:",
+    print("Test results:",
           "loss= {:.4f}".format(loss_test),
           "accuracy= {:.4f}".format(acc_test.item()))
 
@@ -112,7 +112,7 @@ for dataset in ['cora', 'citeseer', 'pubmed']:
     # num of nodes
     num_nodes = adj.shape[0]
     acc = []
-    for _ in range(10):
+    for _ in range(20):
 
         # Model and optimizer
         model = GCN(nfeat=features.shape[1],
@@ -132,8 +132,8 @@ for dataset in ['cora', 'citeseer', 'pubmed']:
         t_total = time.time()
         for epoch in range(args.epochs):
             train(epoch)
-        print("Optimization Finished!")
-        print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
+        # print("Optimization Finished!")
+        # print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
         # Testing
         acc.append(test())
