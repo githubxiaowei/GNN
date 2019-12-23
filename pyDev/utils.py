@@ -195,17 +195,6 @@ def load_data2(dataset_str):
     features[test_idx_reorder, :] = features[test_idx_range, :]
 
     adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
-    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
-
-    # G = nx.Graph(adj)
-    # pr = nx.pagerank(G, alpha=0.8)
-    # p = np.array([item[1] for item in pr.items()])
-    # pp = np.diag(np.log(1+p))
-    # print('pp shape', pp.shape)
-
-    adj0 = normalize_adj(adj + sp.eye(adj.shape[0]) )
-    features = adj0.dot(features)
-    features = normalize(features)
 
     labels = np.vstack((ally, ty))
     labels[test_idx_reorder, :] = labels[test_idx_range, :]
@@ -214,12 +203,23 @@ def load_data2(dataset_str):
     idx_train = range(len(y))
     idx_val = range(len(y), len(y) + 500)
 
-    min_degree = 5
-    fdense = features.todense()
-    with Timer():
 
-        similarity = fdense.dot(fdense.T).getA()
+    # ---------------------------------------------------
+    # preprocessing
+
+    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+    adj = adj + sp.eye(adj.shape[0])
+
+    adj0 = normalize_adj(adj)
+    features = adj0.dot(features)
+    features = normalize(features)
+
+    fdense = np.array(features.todense())
+    with Timer():
+        similarity = fdense.dot(fdense.T)
+        # similarity = -pairwise_l2_distances(fdense,fdense)
         edges = []
+        min_degree = 5
         for i in range(similarity.shape[0]):
             num_neighbors = np.sum(adj[i])
             if num_neighbors < min_degree:
@@ -227,13 +227,17 @@ def load_data2(dataset_str):
                     edges.append((i,v))
         edges = np.array(edges)
         adjs = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
-                            shape=(similarity.shape[0], similarity.shape[0]),
+                              shape=(similarity.shape[0], similarity.shape[0]),
                             dtype=np.float32)
 
-    # adj = normalize_adj(adj + adjs)
-    # adj = normalize_adj((adj + normalize_adj(adjs)))
-    # adj = normalize_adj((adj0 + normalize_adj(adjs)))
-    adj = normalize_adj(adj + adjs)
+    adj = adj + (adjs - adj).multiply(adjs > adj)
+    adj = normalize_adj(adj)
+    # ---------------------------------------------------------
+
+
+
+
+
 
     # convert to torch tensor
     features = torch.FloatTensor(np.array(fdense))
@@ -257,3 +261,8 @@ def topk(inputs, k):
             else:
                 output[0] = (number, i)
     return output
+
+def pairwise_l2_distances(X, Y):
+    D = -2 * X @ Y.T + np.sum(Y**2, axis=1) + np.sum(X**2, axis=1)[:, np.newaxis]
+    D[D < 0] = 0
+    return D

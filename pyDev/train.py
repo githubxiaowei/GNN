@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import copy
 import time
 import argparse
 import numpy as np
@@ -21,7 +22,7 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
 parser.add_argument('--fastmode', action='store_true', default=False,
                     help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
-parser.add_argument('--epochs', type=int, default=200,
+parser.add_argument('--epochs', type=int, default=300,
                     help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.01,
                     help='Initial learning rate.')
@@ -86,6 +87,7 @@ def train(epoch):
     #       'loss_val: {:.4f}'.format(loss_val.item()),
     #       'acc_val: {:.4f}'.format(acc_val.item()),
     #       'time: {:.4f}s'.format(time.time() - t))
+    return loss_val, acc_val
 
 
 def test():
@@ -129,10 +131,19 @@ for dataset in ['cora', 'citeseer', 'pubmed']:
             labels = labels.cuda()
 
         # Train model
-        t_total = time.time()
+        # t_total = time.time()
+        min_loss_val = 10
+        max_acc_val = 0
+        best_model = None
         for epoch in range(args.epochs):
-            train(epoch)
-        # print("Optimization Finished!")
+            loss_val, acc_val = train(epoch)
+            # if epoch > 200 and acc_val >= max_acc_val:
+            if epoch > 200 and loss_val <= min_loss_val:
+                # max_acc_val = acc_val
+                min_loss_val = loss_val
+                best_model = (epoch, copy.deepcopy(model))
+        epoch, model = best_model
+        print("Optimization Finished!, best epoch:{}".format(epoch))
         # print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
         # Testing

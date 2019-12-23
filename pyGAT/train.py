@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 
-from utils import load_data, accuracy
+from utils import load_data, load_data2, accuracy
 from models import GAT, SpGAT
 
 # Training settings
@@ -25,7 +25,7 @@ parser.add_argument('--seed', type=int, default=72, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=150, help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.005, help='Initial learning rate.')
 parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
-parser.add_argument('--hidden', type=int, default=8, help='Number of hidden units.')
+parser.add_argument('--hidden', type=int, default=6, help='Number of hidden units.')
 parser.add_argument('--nb_heads', type=int, default=4, help='Number of head attentions.')  #8
 parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 - keep probability).')
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
@@ -41,7 +41,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test = load_data('cora')
+adj, features, labels, idx_train, idx_val, idx_test = load_data2('cora')
 
 # Model and optimizer
 if args.sparse:
