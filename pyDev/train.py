@@ -24,7 +24,7 @@ parser.add_argument('--fastmode', action='store_true', default=False,
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=300,
                     help='Number of epochs to train.')
-parser.add_argument('--lr', type=float, default=0.01,
+parser.add_argument('--lr', type=float, default=0.008,
                     help='Initial learning rate.')
 parser.add_argument('--weight_decay', type=float, default=5e-4,
                     help='Weight decay (L2 loss on parameters).')
@@ -67,7 +67,7 @@ def train(epoch):
     loss_train = F.nll_loss(output[idx_train], labels[idx_train])
     # loss_var = torch.trace(torch.mm(prediction.T,torch.mm(L, prediction)))*0.01
     loss_recover = F.mse_loss(feat_recover,features, reduction='sum')
-    loss_total = loss_train + loss_recover*0.1
+    loss_total = loss_train + loss_recover*0.5
 
     loss_total.backward()
     optimizer.step()
@@ -114,7 +114,7 @@ for dataset in ['cora', 'citeseer', 'pubmed']:
     # num of nodes
     num_nodes = adj.shape[0]
     acc = []
-    for _ in range(20):
+    for _ in range(100):
 
         # Model and optimizer
         model = GCN(nfeat=features.shape[1],
@@ -143,7 +143,7 @@ for dataset in ['cora', 'citeseer', 'pubmed']:
                 min_loss_val = loss_val
                 best_model = (epoch, copy.deepcopy(model))
         epoch, model = best_model
-        print("Optimization Finished!, best epoch:{}".format(epoch))
+        # print("Optimization Finished!, best epoch:{}".format(epoch))
         # print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
         # Testing

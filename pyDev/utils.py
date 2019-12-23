@@ -215,32 +215,30 @@ def load_data2(dataset_str):
     features = normalize(features)
 
     fdense = np.array(features.todense())
-    with Timer():
-        similarity = fdense.dot(fdense.T)
-        # similarity = -pairwise_l2_distances(fdense,fdense)
-        edges = []
-        min_degree = 5
-        for i in range(similarity.shape[0]):
-            num_neighbors = np.sum(adj[i])
-            if num_neighbors < min_degree:
-                for s,v in topk(similarity[i], min_degree):
-                    edges.append((i,v))
-        edges = np.array(edges)
-        adjs = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
-                              shape=(similarity.shape[0], similarity.shape[0]),
-                            dtype=np.float32)
 
+    similarity = fdense.dot(fdense.T)
+
+    edges = []
+    min_degree = 3
+    for i in range(similarity.shape[0]):
+        num_neighbors = np.sum(adj[i])
+        if num_neighbors < min_degree:
+            for s,v in topk(similarity[i], min_degree):
+                edges.append((i,v))
+    edges = np.array(edges)
+    adjs = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
+                          shape=(similarity.shape[0], similarity.shape[0]),
+                        dtype=np.float32)
+
+    # adjs = adjs + (adjs.T - adjs).multiply(adjs.T > adjs)
     adj = adj + (adjs - adj).multiply(adjs > adj)
     adj = normalize_adj(adj)
+
+
     # ---------------------------------------------------------
 
-
-
-
-
-
     # convert to torch tensor
-    features = torch.FloatTensor(np.array(fdense))
+    features = torch.FloatTensor(fdense)
     # features = sparse_mx_to_torch_sparse_tensor(features)    ## using dense features is faster
     labels = torch.LongTensor(np.where(labels)[1])
     # adj = sparse_mx_to_torch_sparse_tensor(adj)
@@ -262,7 +260,7 @@ def topk(inputs, k):
                 output[0] = (number, i)
     return output
 
-def pairwise_l2_distances(X, Y):
-    D = -2 * X @ Y.T + np.sum(Y**2, axis=1) + np.sum(X**2, axis=1)[:, np.newaxis]
-    D[D < 0] = 0
-    return D
+# def pairwise_l2_distances(X, Y):
+#     D = -2 * X @ Y.T + np.sum(Y**2, axis=1) + np.sum(X**2, axis=1)[:, np.newaxis]
+#     D[D < 0] = 0
+#     return D
