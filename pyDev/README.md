@@ -22,6 +22,6 @@ PUBMED | 79.1  | 0.3
 
 DATASET | ACC | STD
 --- | --- | ---
-CORA | 80.7 | 0.6
-CITESEER | 71.8 | 0.7
-PUBMED|77.3 |  0.4
+CORA | 81.4 | 0.5
+CITESEER | 71.1 | 0.6
+PUBMED|78.9 |  0.4
